@@ -14,20 +14,26 @@ dotenv.config();
 
 const app = express();
 
-// ---- Network config: listen on all interfaces by default (host VM friendly)
+// ---- Network config
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || '0.0.0.0';
 
-// ---- Trust proxy (important if you ever put this behind HTTPS/reverse proxy)
 app.set('trust proxy', 1);
 
-// ---- Core middleware: body + cookies
+// ---- Core middleware
 app.use(express.json());
 app.use(cookieParser());
 
 // ============================================================================
-// CORS configuration
+// CORS CONFIGURATION
 // ============================================================================
+
+// 〰️ ADDED: Allow production frontend (Netlify, custom domain, etc.)
+const deployedOrigins = [
+  process.env.CLIENT_ORIGIN,       // e.g. https://mytop6.netlify.app
+  process.env.CLIENT_ORIGIN_2,     // optional fallback
+].filter(Boolean);
+
 const allowedOrigins = [
   "null",
 
@@ -35,27 +41,41 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
 
-  // Watchtower (5173)
+  // Watchtower
   "http://localhost:5173",
   "http://127.0.0.1:5173",
 
-  // Mainframe (5174/5175/5176)
+  // Mainframe
   "http://localhost:5174",
-  "http://127.0.0.1:5174",
   "http://localhost:5175",
-  "http://127.0.0.1:5175",
   "http://localhost:5176",
+  "http://127.0.0.1:5174",
+  "http://127.0.0.1:5175",
   "http://127.0.0.1:5176",
 
   // LAN dev
   "http://192.168.2.2:5173",
   "http://192.168.2.2:5174",
+
+  // 〰️ ADDED: Deployment origins
+  ...deployedOrigins
 ];
 
 const corsOptions = {
   origin(origin, cb) {
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-    if (/^http:\/\/192\.168\.2\.\d+:517[4-6]$/.test(origin)) return cb(null, true);
+    // Allow tools like curl or server-side requests
+    if (!origin) return cb(null, true);
+
+    // Allow explicitly whitelisted origins
+    if (allowedOrigins.includes(origin)) {
+      return cb(null, true);
+    }
+
+    // Special LAN pattern
+    if (/^http:\/\/192\.168\.2\.\d+:517[4-6]$/.test(origin)) {
+      return cb(null, true);
+    }
+
     return cb(new Error(`Origin not allowed by CORS: ${origin}`));
   },
   credentials: true,
@@ -111,27 +131,21 @@ const uploadRoutes        = require('./routes/upload');
 const locationsRoutes     = require('./routes/locations');
 const threadsRoutes       = require('./routes/threads');
 
-// CGVI router
 const cgviModule = require('./routes/cgvi');
 const cgviRouter = (cgviModule && cgviModule.default) ? cgviModule.default : cgviModule;
 
 console.log('✅ Mongo URI present:', !!process.env.MONGODB_URI);
 
-// ---- Admin-user routers
-app.use("/api/watchtower-users", quikmodUsers);
-app.use("/api/mainframe-users", mainframeUsers);
-
-// ---- Auth middleware
 const requireAuth = require("./middleware/auth");
 
 // ============================================================================
-// CONNECT DB → THEN MOUNT ALL ROUTES
+// CONNECT DB, THEN MOUNT ROUTES
 // ============================================================================
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('✅ Connected to MongoDB Atlas!');
 
-    // Public / general routes
+    // Public routes
     app.use('/api/cgvi', cgviRouter);
     app.use('/api/upload', uploadRoutes);
     app.use('/api/ama', require('./routes/ama'));
@@ -140,14 +154,14 @@ mongoose.connect(process.env.MONGODB_URI)
     app.use('/api/quikmod-users', quikmodUsersRoutes);
     app.use('/api/locations', locationsRoutes);
 
-    // 🚀 MyTop6 authentication
+    // MyTop6 Auth
     app.use('/api/auth', require('./routes/auth'));
 
-    // 🔓 User routes
+    // User routes
     app.use('/api/users', usersPublicRouter);
     app.use('/api/users', usersRouter);
 
-    // 🔓 Feature routes
+    // Feature routes
     app.use('/api/bulletins', require('./routes/bulletins'));
     app.use('/api/messages', require('./routes/messages'));
     app.use('/api/communities', require('./routes/communities'));
@@ -155,15 +169,13 @@ mongoose.connect(process.env.MONGODB_URI)
     app.use('/api/status', require('./routes/status'));
     app.use('/api', threadsRoutes);
 
-    // 🔒 INTERNAL ONLY
+    // Internal
     app.use('/api/moderation', requireAuth, moderationRoutes);
     app.use('/api/reports', requireAuth, require('./routes/reports'));
     app.use('/api/memos', requireAuth, require('./routes/memos'));
 
-    // (optional) app.use('/api/warning-level', warningLevelRouter);
-
     // =====================================================================
-    // SPA STATIC CLIENT (MyTop6 build)
+    // SPA STATIC CLIENT (OPTIONAL)
     // =====================================================================
     const clientBuildPath = path.join(__dirname, 'client', 'build');
 
@@ -177,13 +189,11 @@ mongoose.connect(process.env.MONGODB_URI)
       });
     } else {
       console.log('ℹ️ No client build found:', clientBuildPath);
-      console.log('   Run `npm run build` to enable SPA mode.');
     }
 
     // Start server
     app.listen(PORT, HOST, () => {
       console.log(`🚀 Server running on http://${HOST}:${PORT}`);
-      console.log('   Tip: From Ubuntu VM: curl -i -H "Origin: null" http://<LAN_IP>:' + PORT + '/health');
     });
   })
   .catch((err) => {
