@@ -1,0 +1,410 @@
+[
+  {
+    "code": "101.1",
+    "title": "Harassment: abusive language (private individual)",
+    "severity": 1,
+    "desc": "Definition: Targeted insults, epithets, or degrading remarks aimed at a private individual.\nIncludes: name-calling; profanity directed at a person; mockery of non-protected traits (appearance, job, hobbies).\nExclusions: Non-targeted profanity; criticism of actions/ideas without personal insults; satire not aimed at a private person."
+  },
+  {
+    "code": "101.2",
+    "title": "Harassment: coordinated harassment / dogpiling",
+    "severity": 1,
+    "desc": "Definition: Organized or orchestrated effort to harass a target (private or public figure).\nIncludes: brigading via DMs/comments; call-to-action posts directing followers to attack; mass-tag harassment threads.\nSignals: Same scripts/hashtags across many accounts; timing spikes; cross-linking to targets.\nExclusions: Good-faith mobilization to contact officials/businesses without harassment or personal attacks."
+  },
+  {
+    "code": "101.3",
+    "title": "Harassment: doxxing / PII exposure",
+    "severity": 1,
+    "desc": "Definition: Sharing someone’s private, identifying, or contact information with intent to harass or cause harm.\nPII Examples: home/work address, phone, personal email, SSN, financial IDs, geo coordinates, private photos of residence.\nExclusions: Public-interest journalism using already public official information; user’s own info; consented sharing."
+  },
+  {
+    "code": "102.1",
+    "title": "Hate speech: directed attack (protected class)",
+    "severity": 1,
+    "desc": "Definition: Attacks against a protected class or its members (race, ethnicity, nationality, religion, sex, gender identity, sexual orientation, disability, serious disease).\nIncludes: slurs; demeaning metaphors; calls to harm or exclude the class; targeting individuals based on protected attribute.\nExclusions: Neutral/academic discussion of hateful speech; reclaimed self-referential use (context sensitive)."
+  },
+  {
+    "code": "103.1",
+    "title": "Sexual content: pornography / explicit sex acts",
+    "severity": 1,
+    "desc": "Definition: Explicit sexual acts or pornographic content meant for arousal.\nIncludes: visible sex acts; explicit masturbation; explicit sexual services demos; porn thumbnails/clips.\nExclusions: Sexual health education without explicit imagery; non-sexual medical content."
+  },
+  {
+    "code": "103.2",
+    "title": "Sexual content: solicitation of sexual services",
+    "severity": 1,
+    "desc": "Definition: Offers/requests to buy, sell, trade, or facilitate sexual services.\nIncludes: escort ads; “PPV” sexual service offers; transactional language (“rates/booking”); third-party brokering.\nExclusions: Dating without transactional language; adult content creators linking to compliant platforms without explicit service offers."
+  },
+  {
+    "code": "107.1",
+    "title": "Nudity: visible genitalia (non-medical)",
+    "severity": 1,
+    "desc": "Definition: Visible genitalia presented outside clear medical/educational context.\nIncludes: close-ups; transparent/see-through garments revealing genitals; erection outline intended as sexual display.\nExclusions: Medical or educational imagery; clinical documentation; newsworthy health reporting presented in a non-sexual way."
+  },
+  {
+    "code": "107.2",
+    "title": "Nudity: female nipples (non-exempt)",
+    "severity": 1,
+    "desc": "Definition: Visible female nipples outside exempt scenarios.\nIncludes: erotic posing with nipple visibility; content intended for arousal.\nExclusions: Breastfeeding, childbirth/after-birth moments, post-mastectomy, bona fide medical or educational contexts."
+  },
+  {
+    "code": "107.3",
+    "title": "Nudity: adult sexualized nudity (non-explicit)",
+    "severity": 1,
+    "desc": "Definition: Sexualized posing or erotic nudity without explicit sex acts.\nIncludes: full or partial nudity with sexual framing; striptease imagery; fetish attire centered on nudity.\nExclusions: Non-sexual artistic nudity with no genitalia/female nipples shown; medical/educational contexts."
+  },
+  {
+    "code": "108.1",
+    "title": "Impersonation: private individual",
+    "severity": 1,
+    "desc": "Definition: Pretending to be a private person with the intent to mislead audiences.\nIncludes: copying name/photo/bio to misrepresent identity; impersonating acquaintances, victims, or witnesses.\nExclusions: Clear parody with disclaimers and no realistic risk of confusion."
+  },
+  {
+    "code": "108.2",
+    "title": "Impersonation: public figure/brand",
+    "severity": 1,
+    "desc": "Definition: Misrepresenting a public figure, organization, or brand to deceive.\nIncludes: fake CEO/celebrity accounts; spoofed brand support profiles; phishing via brand impersonation.\nExclusions: Clear parody labeled in handle/bio and content; fan accounts that do not claim official status."
+  },
+  {
+    "code": "108.3",
+    "title": "Deceptive badges/official insignia",
+    "severity": 1,
+    "desc": "Definition: Misuse or fabrication of verification marks, government/official seals, or “official” labels to imply authority.\nIncludes: fake checkmarks; altered badges; “official” in handle when not authorized."
+  },
+  {
+    "code": "109.1",
+    "title": "Non-consensual surveillance/recordings",
+    "severity": 1,
+    "desc": "Definition: Covert capture or distribution of someone’s private activity without consent (non-sexual).\nIncludes: hidden cameras in private spaces; recording private conversations; stalking-style drone footage of a residence.\nExclusions: Public-interest reporting in public spaces; recordings where there is no reasonable expectation of privacy (jurisdiction dependent)."
+  },
+  {
+    "code": "109.2",
+    "title": "Sharing hacked/leaked personal content",
+    "severity": 1,
+    "desc": "Definition: Posting someone’s personal content obtained through hacking/leaks (non-intimate).\nIncludes: private emails, cloud file dumps, financial docs; non-public contact lists.\nExclusions: Public documents or info released with consent; verified whistleblowing with strong public-interest defense (requires legal review)."
+  },
+  {
+    "code": "105.1",
+    "title": "Spam: mass unsolicited posting / flooding",
+    "severity": 1,
+    "desc": "Definition: Bulk or repetitive posting that clutters feeds or replies and degrades user experience.\nIncludes: comment/reply floods; duplicate threads; auto-post loops."
+  },
+  {
+    "code": "105.2",
+    "title": "Spam: malicious/deceptive links",
+    "severity": 1,
+    "desc": "Definition: Links intended to trick users into harmful actions or sites.\nIncludes: clickjacking; drive-by downloads; phishing landing pages; obfuscated redirect chains."
+  },
+  {
+    "code": "105.3",
+    "title": "Spam: repetitive commercial promotion",
+    "severity": 1,
+    "desc": "Definition: Repetitive marketing/messages posted across surfaces without genuine context.\nIncludes: multi-post affiliate drops; chain messages; coupon blast bots."
+  },
+  {
+    "code": "105.4",
+    "title": "Spam: fake engagement",
+    "severity": 1,
+    "desc": "Definition: Buying, selling, or coordinating artificial likes, comments, follows, votes, or reposts.\nIncludes: engagement pods; marketplaces for reactions; scripted comment bots."
+  },
+  {
+    "code": "105.5",
+    "title": "Spam: fake/misleading account creation",
+    "severity": 1,
+    "desc": "Definition: Sockpuppets/mass accounts created to mislead or evade enforcement.\nIncludes: identity-masking farms; account aging for resale; rapid signups from same device/IP with evasion."
+  },
+  {
+    "code": "105.6",
+    "title": "Spam: abuse of reporting/moderation tools",
+    "severity": 1,
+    "desc": "Definition: Coordinated or bad-faith use of report tools to silence or harass.\nIncludes: brigading reports; mass false flags; scripts to auto-report targets."
+  },
+  {
+    "code": "106.1",
+    "title": "Misinformation: harmful health claims",
+    "severity": 1,
+    "desc": "Definition: Claims that could directly cause health harm or delay care.\nIncludes: false cures; anti-vaccine disinformation with harm framing; dangerous dosing advice.\nExclusions: Personal anecdotes framed as opinion; good-faith discussion with authoritative citations."
+  },
+  {
+    "code": "106.2",
+    "title": "Misinformation: civic processes",
+    "severity": 1,
+    "desc": "Definition: False claims that suppress or mislead participation in civic processes.\nIncludes: wrong election dates/locations; fake registration requirements; misstatements about eligibility.\nExclusions: Clear satire; opinion about policies without procedural claims."
+  },
+  {
+    "code": "106.3",
+    "title": "Misinformation: emergencies/public safety",
+    "severity": 1,
+    "desc": "Definition: False claims about disasters, evacuations, shelter/aid, or public safety instructions.\nIncludes: fake evacuation routes; false active-shooter alerts; fabricated boil-water advisories."
+  },
+  {
+    "code": "201.1",
+    "title": "Harassment: threats (non-credible)",
+    "severity": 2,
+    "desc": "Definition: Stated intent to cause harm without specific means/target details; or obviously hyperbolic.\nIncludes: “I’ll beat you up” without plan; vague threats to “make you pay.”\nNote: If target + means are specific and appear credible, consider 404.1 (Tier 4)."
+  },
+  {
+    "code": "201.2",
+    "title": "Harassment: severe bullying / psychological harm",
+    "severity": 2,
+    "desc": "Definition: Sustained harassment aiming to degrade, isolate, or cause mental harm.\nIncludes: humiliation campaigns; targeting known vulnerabilities; coordinated shaming."
+  },
+  {
+    "code": "202.1",
+    "title": "Hate speech: exclusion/segregation",
+    "severity": 2,
+    "desc": "Definition: Calls to exclude, deport, segregate, or remove rights from protected classes.\nIncludes: “Keep them out,” “They shouldn’t be allowed to vote,” “Separate schools/areas.”"
+  },
+  {
+    "code": "202.2",
+    "title": "Hate speech: dehumanizing language",
+    "severity": 2,
+    "desc": "Definition: Describing a protected class as subhuman, animals, filth, disease.\nIncludes: vermin/parasite tropes; disease metaphors; genetic degradation claims."
+  },
+  {
+    "code": "203.1",
+    "title": "Violence: graphic gore/death (shock/glorification)",
+    "severity": 2,
+    "desc": "Definition: Graphic portrayals of serious injury or death posted for shock value or to glorify violence.\nIncludes: beheadings; dismemberment; crushed bodies; cheering on gore.\nExclusions: News/reporting with clear intent to inform, appropriate warnings, and no glorification (context review needed)."
+  },
+  {
+    "code": "203.2",
+    "title": "Violence: encouraging dangerous stunts/challenges",
+    "severity": 2,
+    "desc": "Definition: Promotion of activities likely to cause serious injury.\nIncludes: asphyxiation games; ingestion challenges; roof/train surfing."
+  },
+  {
+    "code": "203.3",
+    "title": "Violence: animal cruelty",
+    "severity": 2,
+    "desc": "Definition: Graphic or celebratory depictions of cruelty or torture toward animals.\nIncludes: staged harm; blood sports; “prank” cruelty that causes suffering.\nExclusions: Documentary/reporting intended to condemn cruelty, presented clearly as educational/news."
+  },
+  {
+    "code": "204.1",
+    "title": "Fraud: financial scams",
+    "severity": 2,
+    "desc": "Definition: Deceptive schemes to obtain money/credentials.\nIncludes: phishing; fake investment multipliers; giveaway scams; refund/buyer-fraud playbooks."
+  },
+  {
+    "code": "204.2",
+    "title": "Fraud: identity theft/impersonation for fraud",
+    "severity": 2,
+    "desc": "Definition: Using another’s identity or stolen data to defraud.\nIncludes: SIM swapping guides; KYC bypass kits; SSN+DoB combos."
+  },
+  {
+    "code": "204.3",
+    "title": "Fraud: sale of counterfeit goods",
+    "severity": 2,
+    "desc": "Definition: Marketing or selling fakes as genuine.\nIncludes: luxury knockoffs; fake tickets; forged certifications."
+  },
+  {
+    "code": "205.1",
+    "title": "Regulated goods: illegal drugs/paraphernalia",
+    "severity": 2,
+    "desc": "Definition: Sale or trade of illegal drugs; distribution facilitation.\nIncludes: DMs for prices; shipping instructions; paraphernalia marketed for illegal use."
+  },
+  {
+    "code": "205.2",
+    "title": "Regulated goods: firearms/explosives/weapons",
+    "severity": 2,
+    "desc": "Definition: Sale or trade of weapons, ammo, explosives without allowed frameworks.\nIncludes: private sales; “DM for Glock”; conversion kits; ghost gun parts."
+  },
+  {
+    "code": "205.3",
+    "title": "Regulated goods: unregulated medical products",
+    "severity": 2,
+    "desc": "Definition: Selling unapproved medical products/supplements with health claims.\nIncludes: miracle cures; unlicensed pharmacies; injectable compounds without Rx."
+  },
+  {
+    "code": "205.4",
+    "title": "Regulated goods: human remains/organs",
+    "severity": 2,
+    "desc": "Definition: Sale/trafficking of human remains or organs outside legal/ethical frameworks."
+  },
+  {
+    "code": "205.5",
+    "title": "Regulated goods: unlicensed gambling",
+    "severity": 2,
+    "desc": "Definition: Operating or promoting gambling without required licenses.\nIncludes: illegal sportsbooks; lottery/raffle scams; crypto casinos without licensing."
+  },
+  {
+    "code": "206.1",
+    "title": "Manipulation: coordinated inauthentic behavior (CIB)",
+    "severity": 2,
+    "desc": "Definition: Use of networks of fake/compromised accounts to mislead or amplify narratives.\nSignals: central control; shared infrastructure; synchronized posting; persona reuse."
+  },
+  {
+    "code": "206.2",
+    "title": "Manipulation: deceptive deepfakes",
+    "severity": 2,
+    "desc": "Definition: Synthetic or manipulated media presented as real to mislead.\nIncludes: fabricated speech/actions; swapped faces misleading about events.\nExclusions: Satire/parody clearly labeled and unlikely to cause confusion."
+  },
+  {
+    "code": "206.3",
+    "title": "Manipulation: foreign interference",
+    "severity": 2,
+    "desc": "Definition: State/foreign-backed operations to influence civic outcomes on-platform.\nIncludes: astro-turfing; front media outlets; covert ad buys."
+  },
+  {
+    "code": "207.1",
+    "title": "Crime how-to: non-terror offenses",
+    "severity": 2,
+    "desc": "Definition: Instructions to commit crimes (non-terror), or materially facilitate such crimes.\nIncludes: burglary guides; credit card skimming; catalytic converter theft tips."
+  },
+  {
+    "code": "207.2",
+    "title": "Crime how-to: illegal drug manufacturing",
+    "severity": 2,
+    "desc": "Definition: Instructions to produce illegal drugs or precursors.\nIncludes: step-by-step cook guides; precursor sourcing; lab safety workarounds."
+  },
+  {
+    "code": "301.1",
+    "title": "Violence & incitement: directed threats",
+    "severity": 3,
+    "desc": "Definition: Threats naming a target with some specifics but lacking verified capability.\nIncludes: “I will find you at [place]”; “We’re coming for you” with date/place.\nNote: If specific target + means and credible, consider 404.1 (Tier 4)."
+  },
+  {
+    "code": "301.2",
+    "title": "Violence & incitement: praise/glorification",
+    "severity": 3,
+    "desc": "Definition: Praising past violent acts or perpetrators; celebrating harm.\nIncludes: cheering attacks; “they deserved it,” martyr posters for attackers."
+  },
+  {
+    "code": "301.3",
+    "title": "Violence & incitement: support for violent movements",
+    "severity": 3,
+    "desc": "Definition: Support for groups advocating violence that are not designated terrorist orgs.\nIncludes: logos/flags with praise; recruitment language."
+  },
+  {
+    "code": "302.1",
+    "title": "Sexual exploitation: non-consensual intimate imagery",
+    "severity": 3,
+    "desc": "Definition: Sharing intimate imagery without consent (NCI, “revenge porn”).\nIncludes: private nudes; leaked intimate videos; threats to expose (if extortive, see 302.2)."
+  },
+  {
+    "code": "302.2",
+    "title": "Sexual exploitation: sextortion",
+    "severity": 3,
+    "desc": "Definition: Sexual extortion demanding images, acts, or money under threat.\nIncludes: “pay or I leak your nudes”; blackmail with intimate materials."
+  },
+  {
+    "code": "302.3",
+    "title": "Sexual exploitation: grooming (adult target)",
+    "severity": 3,
+    "desc": "Definition: Predatory sexual grooming of adults (manipulation/coercion patterns).\nIncludes: escalating demands; isolating tactics; exploiting vulnerabilities to obtain sexual content."
+  },
+  {
+    "code": "302.4",
+    "title": "Sexual exploitation: voyeuristic imagery",
+    "severity": 3,
+    "desc": "Definition: Hidden or non-consensual sexualized imagery such as upskirt/downblouse.\nIncludes: covert filming in changing rooms/restrooms; creepshots of intimate areas."
+  },
+  {
+    "code": "303.1",
+    "title": "Platform security: selling/trading accounts/credentials",
+    "severity": 3,
+    "desc": "Definition: Trafficking of accounts, sessions, tokens, or access passes.\nIncludes: OTP/2FA bypass sales; session cookies; “aged” accounts marketplace."
+  },
+  {
+    "code": "303.2",
+    "title": "Platform security: botnets/scraping",
+    "severity": 3,
+    "desc": "Definition: Operating at-scale automation to scrape or interact abusively.\nIncludes: headless farms; captcha-solving rings; massive data exfiltration."
+  },
+  {
+    "code": "303.3",
+    "title": "Platform security: bypassing security/exploits",
+    "severity": 3,
+    "desc": "Definition: Attempting or sharing methods to exploit platform security.\nIncludes: SQL/JS injection payloads; CSRF kits; auth bypass PoCs meant for misuse.\nExclusions: Coordinated vulnerability disclosure via official channels."
+  },
+  {
+    "code": "304.1",
+    "title": "Self-harm: encouragement/instructions",
+    "severity": 3,
+    "desc": "Definition: Content encouraging or instructing suicide or self-harm.\nIncludes: “here’s how to do it”; challenges promoting self-harm.\nExclusions: Recovery stories; crisis support; harm-minimizing resources."
+  },
+  {
+    "code": "304.2",
+    "title": "Eating disorders: pro-ED facilitation",
+    "severity": 3,
+    "desc": "Definition: Content that promotes, instructs, or communities organized to maintain ED behaviors.\nIncludes: “tips/tricks,” starve challenges, purging guides.\nExclusions: Recovery/awareness or support content."
+  },
+  {
+    "code": "401.1",
+    "title": "Child sexual exploitation: CSAM",
+    "severity": 4,
+    "desc": "Definition: Any child sexual abuse material in any format (images, video, audio, text).\nIncludes: production, possession, sharing, or solicitation of CSAM.\nExclusions: None."
+  },
+  {
+    "code": "401.2",
+    "title": "Child sexual exploitation: sexualization of minors",
+    "severity": 4,
+    "desc": "Definition: Sexualized depictions of minors, including AI-generated/drawn content or content presenting young-looking persons as minors.\nIncludes: fetishization of minors; sexualized commentary on minors’ bodies.\nExclusions: None."
+  },
+  {
+    "code": "401.3",
+    "title": "Child sexual exploitation: grooming/solicitation of minors",
+    "severity": 4,
+    "desc": "Definition: Predatory attempts to obtain sexual content/meetings from minors.\nIncludes: requests for nudes; coercion; age misrepresentation to target minors.\nExclusions: None."
+  },
+  {
+    "code": "402.1",
+    "title": "Terrorism: propaganda (graphic/recruiting)",
+    "severity": 4,
+    "desc": "Definition: Praise, support, or propaganda for designated terrorist organizations.\nIncludes: recruitment narratives; martyrdom posters; operational glorification.\nExclusions: None."
+  },
+  {
+    "code": "402.2",
+    "title": "Terrorism: recruitment/fundraising",
+    "severity": 4,
+    "desc": "Definition: Soliciting personnel or funds for designated terrorist groups.\nIncludes: donation instructions; membership vetting calls; funnel links.\nExclusions: None."
+  },
+  {
+    "code": "402.3",
+    "title": "Terrorism: instructional content",
+    "severity": 4,
+    "desc": "Definition: Operational instructions that facilitate terrorist attacks (weapons, explosives, tactics).\nExclusions: None."
+  },
+  {
+    "code": "403.1",
+    "title": "Human exploitation: trafficking",
+    "severity": 4,
+    "desc": "Definition: Facilitating or promoting human trafficking (labor or sex).\nIncludes: recruitment/transport/harboring; control tactics; brokering.\nExclusions: None."
+  },
+  {
+    "code": "403.2",
+    "title": "Human exploitation: forced labor facilitation",
+    "severity": 4,
+    "desc": "Definition: Content enabling forced labor or exploitation (including debt bondage).\nIncludes: coercive employment schemes; document confiscation tactics.\nExclusions: None."
+  },
+  {
+    "code": "404.1",
+    "title": "Credible threats: specific target + means",
+    "severity": 4,
+    "desc": "Definition: Specific threats naming a target and plausible means/timing, or demonstrating apparent capability.\nIncludes: weapon display + direct threat; doxx + “coming at [time].”\nExclusions: None."
+  },
+  {
+    "code": "404.2",
+    "title": "Credible threats: coordinated real-world planning",
+    "severity": 4,
+    "desc": "Definition: Coordinated planning for real-world violence with concrete logistics (targets, weapons, dates, roles).\nIncludes: attack planning docs; logistics chats; supply lists and assignments.\nExclusions: None."
+  },
+  {
+    "code": "405.1",
+    "title": "Platform compromise: hacking/system intrusion",
+    "severity": 4,
+    "desc": "Definition: Attempts to gain unauthorized access to platform systems or user accounts.\nIncludes: credential stuffing; token theft; exploiting internal tools.\nExclusions: None."
+  },
+  {
+    "code": "405.2",
+    "title": "Platform compromise: malware distribution",
+    "severity": 4,
+    "desc": "Definition: Hosting/distributing malware, droppers, or C2 tooling.\nIncludes: payload links; infected installers; “builder” kits.\nExclusions: None."
+  },
+  {
+    "code": "405.3",
+    "title": "Platform compromise: credential harvesting (at scale)",
+    "severity": 4,
+    "desc": "Definition: Systematic harvesting of credentials via phishing kits, fake portals, or automation.\nIncludes: full-kit sales; large credential dumps; phish campaigns.\nExclusions: None."
+  }
+]
