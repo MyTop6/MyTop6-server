@@ -25,15 +25,8 @@ app.use(express.json());
 app.use(cookieParser());
 
 // ============================================================================
-// CORS CONFIGURATION
+// CORS configuration
 // ============================================================================
-
-// 〰️ ADDED: Allow production frontend (Netlify, custom domain, etc.)
-const deployedOrigins = [
-  process.env.CLIENT_ORIGIN,       // e.g. https://mytop6.netlify.app
-  process.env.CLIENT_ORIGIN_2,     // optional fallback
-].filter(Boolean);
-
 const allowedOrigins = [
   "null",
 
@@ -43,7 +36,7 @@ const allowedOrigins = [
 
   // Netlify production
   "https://mytop6.netlify.app",
-  // (later, when you have it)
+  // future custom domains
   "https://mytop6.app",
   "https://www.mytop6.app",
 
@@ -59,27 +52,22 @@ const allowedOrigins = [
   "http://localhost:5176",
   "http://127.0.0.1:5176",
 
-  // LAN dev
+  // LAN dev (optional)
   "http://192.168.2.2:5173",
   "http://192.168.2.2:5174",
 ];
 
 const corsOptions = {
-  origin(origin, cb) {
-    // Allow tools like curl or server-side requests
+  origin: function (origin, cb) {
+    // Allow tools like curl/Postman (no Origin header)
     if (!origin) return cb(null, true);
 
-    // Allow explicitly whitelisted origins
     if (allowedOrigins.includes(origin)) {
       return cb(null, true);
     }
 
-    // Special LAN pattern
-    if (/^http:\/\/192\.168\.2\.\d+:517[4-6]$/.test(origin)) {
-      return cb(null, true);
-    }
-
-    return cb(new Error(`Origin not allowed by CORS: ${origin}`));
+    console.log("❌ CORS blocked origin:", origin);
+    return cb(new Error("Not allowed by CORS"));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -103,7 +91,7 @@ app.use((req, res, next) => {
 });
 
 app.use(cors(corsOptions));
-app.options(/.*/, cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 // ---- TEMP request logger
 app.use((req, res, next) => {
