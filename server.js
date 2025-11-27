@@ -91,7 +91,7 @@ app.use((req, res, next) => {
 });
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 
 // ---- TEMP request logger
 app.use((req, res, next) => {
