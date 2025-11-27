@@ -41,24 +41,27 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
 
-  // Watchtower
+  // Netlify production
+  "https://mytop6.netlify.app",
+  // (later, when you have it)
+  "https://mytop6.app",
+  "https://www.mytop6.app",
+
+  // Watchtower (5173)
   "http://localhost:5173",
   "http://127.0.0.1:5173",
 
-  // Mainframe
+  // Mainframe (5174/5175/5176)
   "http://localhost:5174",
-  "http://localhost:5175",
-  "http://localhost:5176",
   "http://127.0.0.1:5174",
+  "http://localhost:5175",
   "http://127.0.0.1:5175",
+  "http://localhost:5176",
   "http://127.0.0.1:5176",
 
   // LAN dev
   "http://192.168.2.2:5173",
   "http://192.168.2.2:5174",
-
-  // 〰️ ADDED: Deployment origins
-  ...deployedOrigins
 ];
 
 const corsOptions = {
