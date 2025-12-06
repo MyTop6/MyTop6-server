@@ -6,11 +6,14 @@ const User = require('../models/User');
 const Question = require('../models/Question');
 const mongoose = require('mongoose');
 
-// Normalize phone: keep digits only, e.g. "(555) 123-4567" -> "5551234567"
-function normalizePhone(phone) {
-  if (!phone) return '';
-  return String(phone).replace(/\D/g, '').trim();
-}
+const DEFAULT_PROFILE_PICTURE = "/uploads/nophoto.png";
+
+// 🔹 Treat anything with "nophoto" in it as a default placeholder
+const isDefaultProfilePicture = (value) => {
+  if (!value || typeof value !== "string") return true;
+  const lower = value.toLowerCase();
+  return lower.includes("nophoto");
+};
 
 /* ===================================================================== */
 /* 🔹 REGISTER NEW USER – CALLED FROM ExtraDetailsPage                    */
@@ -322,14 +325,40 @@ router.put('/:id', async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    if (req.body.bio !== undefined) user.bio = req.body.bio;
-    if (req.body.profilePicture !== undefined)
-      user.profilePicture = req.body.profilePicture;
-    if (req.body.profileMusicUrl !== undefined)
-      user.profileMusicUrl = req.body.profileMusicUrl;
-    if (req.body.location !== undefined) user.location = req.body.location;
-    if (req.body.dob !== undefined) user.dob = new Date(req.body.dob);
+    // Bio
+    if (req.body.bio !== undefined) {
+      user.bio = req.body.bio;
+    }
 
+    // ✅ Profile picture:
+    // Only update if:
+    //  - it's a non-empty string
+    //  - AND it's NOT one of our default "nophoto" placeholders
+    if (typeof req.body.profilePicture === "string") {
+      const trimmed = req.body.profilePicture.trim();
+
+      if (trimmed && !isDefaultProfilePicture(trimmed)) {
+        user.profilePicture = trimmed;
+      }
+      // If trimmed is empty or default, we LEAVE user.profilePicture as-is.
+    }
+
+    // Music URL
+    if (req.body.profileMusicUrl !== undefined) {
+      user.profileMusicUrl = req.body.profileMusicUrl;
+    }
+
+    // Location
+    if (req.body.location !== undefined) {
+      user.location = req.body.location;
+    }
+
+    // DOB
+    if (req.body.dob !== undefined) {
+      user.dob = new Date(req.body.dob);
+    }
+
+    // Theme merge
     if (req.body.theme) {
       const currentTheme =
         user.theme && typeof user.theme === 'object'

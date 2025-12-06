@@ -4,13 +4,21 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const path = require('path');
+const path = require('path');   // ✅ only this ONE path import
 const fs = require('fs');
 
 const quikmodUsers   = require("./routes/quikmodUsers");      // Watchtower
 const mainframeUsers = require("./routes/mainframe-users");   // Mainframe
 
-dotenv.config();
+dotenv.config({
+  path: path.join(__dirname, ".env"),
+});
+
+console.log("Cloudinary env check:", {
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  hasKey: !!process.env.CLOUDINARY_API_KEY,
+  hasSecret: !!process.env.CLOUDINARY_API_SECRET,
+});
 
 const app = express();
 
