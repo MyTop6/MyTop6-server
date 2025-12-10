@@ -7,12 +7,22 @@ const cookieParser = require('cookie-parser');
 const path = require('path');   // ✅ only this ONE path import
 const fs = require('fs');
 
-const quikmodUsers   = require("./routes/quikmodUsers");      // Watchtower
-const mainframeUsers = require("./routes/mainframe-users");   // Mainframe
-
+// ✅ Load env FIRST, before any routes that use process.env
 dotenv.config({
   path: path.join(__dirname, ".env"),
 });
+
+console.log("Cloudinary env check:", {
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  hasKey: !!process.env.CLOUDINARY_API_KEY,
+  hasSecret: !!process.env.CLOUDINARY_API_SECRET,
+});
+
+// ✅ Now it's safe to require routes that read env vars
+const authRoutes = require("./routes/auth");
+
+const quikmodUsers   = require("./routes/quikmodUsers");      // Watchtower
+const mainframeUsers = require("./routes/mainframe-users");   // Mainframe
 
 console.log("Cloudinary env check:", {
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -31,6 +41,8 @@ app.set('trust proxy', 1);
 // ---- Core middleware
 app.use(express.json());
 app.use(cookieParser());
+
+
 
 // ============================================================================
 // CORS configuration
@@ -153,8 +165,8 @@ mongoose.connect(process.env.MONGODB_URI)
     app.use('/api/quikmod-users', quikmodUsersRoutes);
     app.use('/api/locations', locationsRoutes);
 
-    // MyTop6 Auth
-    app.use('/api/auth', require('./routes/auth'));
+  // MyTop6 Auth
+  app.use('/api/auth', authRoutes);
 
     // User routes
     app.use('/api/users', usersPublicRouter);

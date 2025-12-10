@@ -15,6 +15,12 @@ const isDefaultProfilePicture = (value) => {
   return lower.includes("nophoto");
 };
 
+// 🔢 Normalize phone: keep digits only, e.g. "(555) 123-4567" -> "5551234567"
+function normalizePhone(phone) {
+  if (!phone) return "";
+  return String(phone).replace(/\D/g, "").trim();
+}
+
 /* ===================================================================== */
 /* 🔹 REGISTER NEW USER – CALLED FROM ExtraDetailsPage                    */
 /* ===================================================================== */

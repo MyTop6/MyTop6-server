@@ -190,6 +190,13 @@ const userSchema = new mongoose.Schema(
       unreadMessages: { type: Number, default: 0 },
     },
 
+    // 🔮 AI personalization: tag interest profile
+    interestTags: {
+      type: Map,
+      of: Number,
+      default: {},
+    },
+
     // ✅ Ask Me Anything feature
     askMeAnythingEnabled: { type: Boolean, default: false },
     allowAnonymousQuestions: { type: Boolean, default: false },

@@ -108,7 +108,17 @@ const bulletinSchema = new mongoose.Schema({
   amaAnswerText: {
     type: String,
     default: ''
+  },
+  tags: [
+  {
+    type: String,
+    index: true
   }
+],
+aiTagConfidence: {
+  type: Number,
+  default: 0
+},
 });
 
 // ✅ Suggested indexes for optimization

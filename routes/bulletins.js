@@ -8,6 +8,10 @@ const Report = require('../models/Report');
 const Notification = require('../models/Notification');
 const Interaction = require('../models/Interaction');
 
+const Friendship = require('../models/Friendship');
+
+const { getFreeformTagsForBulletin } = require("../utils/aiTagger");
+
 const ObjectId = mongoose.Types.ObjectId;
 
 // -----------------------------------------------------------------------------
@@ -85,10 +89,47 @@ const findCommentRecursive = (comments, commentId) => {
 };
 
 // -----------------------------------------------------------------------------
+// AI Personalization Helpers
+// -----------------------------------------------------------------------------
+
+const INTERACTION_WEIGHTS = {
+  like: 3,
+  repost: 4,
+  comment: 4,
+  view: 0.5,
+};
+
+async function updateUserInterestTags(userId, bulletinId, interactionType) {
+  if (!userId || !bulletinId) return; // guard against bad calls
+
+  const weight = INTERACTION_WEIGHTS[interactionType] || 1;
+
+  const [user, bulletin] = await Promise.all([
+    User.findById(userId),
+    Bulletin.findById(bulletinId).select("tags"),
+  ]);
+
+  if (!user || !bulletin || !bulletin.tags?.length) return;
+
+  // Ensure we have a Map
+  if (!user.interestTags) {
+    user.interestTags = new Map();
+  }
+
+  bulletin.tags.forEach((tag) => {
+    const current = user.interestTags.get(tag) || 0;
+    const updated = Math.min(current + weight, 200);
+    user.interestTags.set(tag, updated);
+  });
+
+  await user.save();
+}
+
+// -----------------------------------------------------------------------------
 // POST routes
 // -----------------------------------------------------------------------------
 
-// Create new bulletin with community approval logic + validation
+// Create new bulletin with community approval logic + validation + AI tagging
 router.post('/', async (req, res) => {
   try {
     const { userId, type, content, mediaUrl, communityId } = req.body;
@@ -151,26 +192,47 @@ router.post('/', async (req, res) => {
 
     // --- Community approval logic ---
     let approved = true;
+    let communityName = null;
+    let community = null;
 
     if (communityId) {
       const Community = require('../models/Community');
-      const community = await Community.findById(communityId);
+      community = await Community.findById(communityId);
       if (community?.requireApproval) {
         approved = false;
         await Community.findByIdAndUpdate(communityId, {
           $inc: { pendingBulletins: 1 },
         });
       }
+      communityName = community?.name || null;
     }
 
+    // --- Create bulletin document ---
     const bulletin = new Bulletin({
       userId,
       type,
-      content: trimmed, // store trimmed
+      content: trimmed, // store trimmed text / caption
       mediaUrl,
       communityId: communityId || null,
       approved,
     });
+
+    // --- Let AI decide the tags (non-blocking-ish: if it fails, we still save) ---
+    try {
+      const { tags } = await getFreeformTagsForBulletin({
+        content: trimmed,
+        caption: type === 'text' ? null : trimmed,
+        communityName,
+        imageUrl: type === 'image' ? mediaUrl : null, // 👈 NEW
+      });
+
+      if (Array.isArray(tags) && tags.length > 0) {
+        bulletin.tags = tags;
+      }
+    } catch (tagErr) {
+      console.error('AI tagging failed for bulletin:', tagErr);
+      // don’t throw; we still want the bulletin to be created
+    }
 
     await bulletin.save();
     res.status(201).json(bulletin);
@@ -249,6 +311,9 @@ router.post('/:id/like', async (req, res) => {
         bulletinId: original._id,
         type: 'like',
       });
+
+      await updateUserInterestTags(userId, original._id, "like");
+
     }
 
     await original.save();
@@ -304,6 +369,8 @@ router.post('/:id/repost', async (req, res) => {
       type: 'repost',
     });
 
+    await updateUserInterestTags(userId, original._id, "repost");
+
     const populatedRepost = await populateBulletin(repostBulletin._id);
     res.status(201).json(populatedRepost);
   } catch (err) {
@@ -343,6 +410,8 @@ router.post('/:id/comment', async (req, res) => {
       bulletinId: bulletin._id,
       type: 'comment',
     });
+
+    await updateUserInterestTags(userId, bulletin._id, "comment");
 
     const updatedBulletin = await populateBulletin(req.params.id);
     res.json(updatedBulletin);
@@ -438,6 +507,9 @@ router.post('/:id/view', async (req, res) => {
       bulletinId: req.params.id,
       type: 'view',
     });
+
+    await updateUserInterestTags(userId, req.params.id, "view");
+
     res.json({ message: 'View logged' });
   } catch (err) {
     console.error('Log view error:', err);
@@ -716,166 +788,218 @@ router.get('/unapproved/:communityId', async (req, res) => {
   }
 });
 
-// "My Mix" personalized bulletin feed
-router.get('/myMix/:userId', async (req, res) => {
+// Personalized "For You" feed – mix of interest posts, friend posts, and trending
+router.get("/for-you/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
-    const { page, limit, skip } = getPagination(req);
 
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).lean();
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
 
-    const Friendship = require('../models/Friendship');
-    const Community = require('../models/Community');
+    const now = Date.now();
 
+    // Windows
+    const INTEREST_WINDOW_DAYS = 21; // ~3 weeks
+    const FRIEND_WINDOW_DAYS = 4;    // super fresh friend posts
+    const TRENDING_WINDOW_DAYS_LOCAL = 21;
+
+    const interestSince = new Date(now - INTEREST_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+    const friendSince = new Date(now - FRIEND_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+    const trendingSince = new Date(now - TRENDING_WINDOW_DAYS_LOCAL * 24 * 60 * 60 * 1000);
+
+    // -----------------------------------------------------------------------
+    // 1) Build tag map / interest-based posts
+    // -----------------------------------------------------------------------
+    const tagMap = user.interestTags || {};
+    const entries = Array.from(
+      tagMap instanceof Map ? tagMap.entries() : Object.entries(tagMap)
+    );
+
+    let interestPosts = [];
+
+    if (entries.length) {
+      // top 15 tags
+      entries.sort((a, b) => b[1] - a[1]);
+      const topTags = entries.slice(0, 15).map(([tag]) => tag);
+
+      const interestCandidates = await Bulletin.find({
+        createdAt: { $gte: interestSince },
+        tags: { $in: topTags },
+      })
+        .populate("userId", "username displayName profilePicture")
+        .lean();
+
+      interestPosts = interestCandidates.map((b) => {
+        const ageHours =
+          (now - new Date(b.createdAt).getTime()) / (1000 * 60 * 60);
+
+        const notes = (b.likes?.length || 0) + (b.reposts?.length || 0);
+
+        let tagScore = 0;
+        (b.tags || []).forEach((tag) => {
+          const val =
+            tagMap instanceof Map ? tagMap.get(tag) : tagMap[tag];
+          if (val) tagScore += val;
+        });
+
+        let score = 0;
+        score += tagScore;                   // personalization
+        score += Math.max(0, 15 - ageHours); // recency
+        score += Math.log1p(notes);          // popularity
+
+        return { ...b, _score: score };
+      });
+
+      interestPosts.sort((a, b) => b._score - a._score);
+    }
+
+    // -----------------------------------------------------------------------
+    // 2) Friend posts (very recent)
+    // -----------------------------------------------------------------------
     const friendships = await Friendship.find({
       $or: [
-        { requester: userId, status: 'accepted' },
-        { recipient: userId, status: 'accepted' },
+        { requester: userId, status: "accepted" },
+        { recipient: userId, status: "accepted" },
       ],
-    });
+    }).lean();
 
     const friendIds = friendships.map((f) =>
       f.requester.toString() === userId ? f.recipient : f.requester
     );
 
-    // Communities the user is a member of
-    const userCommunities = await Community.find({ members: userId }).select(
-      '_id'
-    );
-    const communityIds = userCommunities.map((c) => c._id);
+    const friendObjectIds = friendIds.map((id) => new mongoose.Types.ObjectId(id));
+    const userObjectId = new mongoose.Types.ObjectId(userId);
 
-    const windowStart = new Date();
-    windowStart.setDate(windowStart.getDate() - MYMIX_WINDOW_DAYS);
+    let friendPosts = [];
 
-    // 1) Random original posts (last window, no community)
-    const randomPosts = await Bulletin.find({
-      repostOf: null,
-      communityId: null,
-      createdAt: { $gte: windowStart },
-    })
-      .sort({ createdAt: -1 })
-      .limit(MYMIX_SOURCE_LIMIT);
+    if (friendObjectIds.length) {
+      const friendCandidates = await Bulletin.find({
+        createdAt: { $gte: friendSince },
+        userId: { $in: [...friendObjectIds, userObjectId] },
+      })
+        .populate("userId", "username displayName profilePicture")
+        .lean();
 
-    // 2) Friends' original posts (last window, no community)
-    const friendsOriginalPosts = await Bulletin.find({
-      userId: { $in: friendIds },
-      repostOf: null,
-      communityId: null,
-      createdAt: { $gte: windowStart },
-    })
-      .sort({ createdAt: -1 })
-      .limit(MYMIX_SOURCE_LIMIT);
+      friendPosts = friendCandidates.map((b) => {
+        const ageHours =
+          (now - new Date(b.createdAt).getTime()) / (1000 * 60 * 60);
+        const notes = (b.likes?.length || 0) + (b.reposts?.length || 0) + (b.comments?.length || 0);
 
-    // 3) Friends' reposts (reposted in last window, no community)
-    const friendsReposts = await Bulletin.find({
-      userId: { $in: friendIds },
-      repostOf: { $ne: null },
-      communityId: null,
-      createdAt: { $gte: windowStart },
-    })
-      .sort({ createdAt: -1 })
-      .limit(MYMIX_SOURCE_LIMIT);
+        let score = 0;
+        score += Math.max(0, 24 - ageHours); // very recency-weighted
+        score += Math.log1p(notes);          // engagement at least a bit
 
-    // 4) Trending candidate posts (originals only, last window)
-    const trendingCandidates = await Bulletin.find({
-      repostOf: null,
-      createdAt: { $gte: windowStart },
-    })
-      .sort({ createdAt: -1 })
-      .limit(MYMIX_SOURCE_LIMIT);
+        return { ...b, _score: score };
+      });
 
-    // 5) Community posts from joined communities (approved only)
-    const communityPosts = await Bulletin.find({
-      communityId: { $in: communityIds },
-      repostOf: null,
-      approved: true,
-      createdAt: { $gte: windowStart },
-    })
-      .sort({ createdAt: -1 })
-      .limit(MYMIX_SOURCE_LIMIT);
-
-    // Calculate trending scores for trendingCandidates
-    const now = new Date();
-    const thresholdScore = 5;
-
-    const scoredTrending = trendingCandidates.map((b) => {
-      const likes = b.likes.length;
-      const reposts = b.reposts.length;
-      const comments = b.comments.length;
-      const views = 0;
-
-      const rawScore = likes * 3 + reposts * 2 + comments * 2 + views;
-      const hoursSinceCreated = Math.abs(now - b.createdAt) / 36e5;
-      const decayFactor = 1.2;
-      const finalScore =
-        rawScore / Math.pow(hoursSinceCreated + 2, decayFactor);
-
-      return { bulletin: b, score: finalScore };
-    });
-
-    const trendingFiltered = scoredTrending
-      .filter((entry) => entry.score >= thresholdScore)
-      .map((entry) => entry.bulletin);
-
-    // Combine sources
-    const combined = [
-      ...randomPosts,
-      ...friendsOriginalPosts,
-      ...friendsReposts,
-      ...trendingFiltered,
-      ...communityPosts,
-    ];
-
-    // Deduplicate
-    const uniqueMap = new Map();
-    combined.forEach((b) => {
-      uniqueMap.set(b._id.toString(), b);
-    });
-    const uniqueBulletins = Array.from(uniqueMap.values());
-
-    // Shuffle
-    for (let i = uniqueBulletins.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [uniqueBulletins[i], uniqueBulletins[j]] = [
-        uniqueBulletins[j],
-        uniqueBulletins[i],
-      ];
+      friendPosts.sort((a, b) => b._score - a._score);
     }
 
-    const total = uniqueBulletins.length;
-    const sliced = uniqueBulletins.slice(skip, skip + limit);
-    const hasMore = skip + sliced.length < total;
+    // -----------------------------------------------------------------------
+    // 3) Trending posts (sitewide, last 3 weeks, original posts)
+    // -----------------------------------------------------------------------
+    const trendingCandidates = await Bulletin.find({
+      repostOf: null,
+      createdAt: { $gte: trendingSince },
+    })
+      .populate("userId", "username displayName profilePicture")
+      .lean();
 
-    // Populate only current page
-    const populated = await Bulletin.populate(sliced, [
-      { path: 'userId', select: 'username displayName profilePicture' },
-      { path: 'communityId', select: 'name' },
-      {
-        path: 'comments.user',
-        select: 'username displayName profilePicture',
-      },
-      {
-        path: 'repostOf',
-        populate: {
-          path: 'userId',
-          select: 'username displayName profilePicture',
-        },
-      },
-    ]);
+    let trendingPosts = trendingCandidates.map((b) => {
+      const likes = b.likes?.length || 0;
+      const reposts = b.reposts?.length || 0;
+      const comments = b.comments?.length || 0;
+      const views = 0; // not tracked yet
 
-    res.json({
-      items: populated,
-      page,
-      limit,
-      total,
-      hasMore,
+      const rawScore = likes * 3 + reposts * 2 + comments * 2 + views;
+      const hoursSinceCreated =
+        Math.abs(now - new Date(b.createdAt).getTime()) / 36e5;
+      const decayFactor = 1.2;
+
+      const score = rawScore / Math.pow(hoursSinceCreated + 2, decayFactor);
+      return { ...b, _score: score };
     });
+
+    trendingPosts.sort((a, b) => b._score - a._score);
+
+    // -----------------------------------------------------------------------
+    // 4) Deduplicate IDs across buckets
+    // -----------------------------------------------------------------------
+    const seen = new Set();
+
+    const dedupe = (arr) => {
+      const out = [];
+      for (const item of arr) {
+        const id = item._id.toString();
+        if (!seen.has(id)) {
+          seen.add(id);
+          out.push(item);
+        }
+      }
+      return out;
+    };
+
+    interestPosts = dedupe(interestPosts);
+    friendPosts = dedupe(friendPosts);
+    trendingPosts = dedupe(trendingPosts);
+
+    // -----------------------------------------------------------------------
+    // 5) Choose counts from each bucket, then shuffle them together
+    // -----------------------------------------------------------------------
+    const MAX_TOTAL = 50;
+
+    const targetInterest = Math.floor(MAX_TOTAL * 0.5); // ~50%
+    const targetFriends = Math.floor(MAX_TOTAL * 0.3);  // ~30%
+    const targetTrending = MAX_TOTAL - targetInterest - targetFriends; // ~20%
+
+    const chosenInterest = interestPosts.slice(0, targetInterest);
+    const remainingAfterInterest = MAX_TOTAL - chosenInterest.length;
+
+    const chosenFriends = friendPosts.slice(
+      0,
+      Math.min(targetFriends, remainingAfterInterest)
+    );
+    const remainingAfterFriends =
+      MAX_TOTAL - chosenInterest.length - chosenFriends.length;
+
+    const chosenTrending = trendingPosts.slice(
+      0,
+      Math.min(targetTrending, remainingAfterFriends)
+    );
+
+    let combined = [
+      ...chosenInterest,
+      ...chosenFriends,
+      ...chosenTrending,
+    ];
+
+    // If user has no interest tags at all, or buckets are super small,
+    // fall back to just "recent everything" so feed isn't empty.
+    if (!combined.length) {
+      const fallback = await Bulletin.find()
+        .sort({ createdAt: -1 })
+        .limit(MAX_TOTAL)
+        .populate("userId", "username displayName profilePicture")
+        .lean();
+
+      return res.json(fallback);
+    }
+
+    // Fisher–Yates shuffle so they are mixed, not in big blocks
+    for (let i = combined.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [combined[i], combined[j]] = [combined[j], combined[i]];
+    }
+
+    // Strip the helper score field before sending
+    combined = combined.map(({ _score, ...rest }) => rest);
+
+    res.json(combined);
   } catch (err) {
-    console.error('Failed to fetch My Mix bulletins:', err);
-    res.status(500).json({ error: 'Failed to fetch My Mix bulletins' });
+    console.error("Error in /for-you:", err);
+    res.status(500).json({ error: "Failed to fetch personalized feed" });
   }
 });
 

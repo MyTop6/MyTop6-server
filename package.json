@@ -20,7 +20,9 @@
     "mongodb": "^6.17.0",
     "mongoose": "^8.16.0",
     "multer": "^2.0.1",
-    "multer-storage-cloudinary": "^4.0.0"
+    "multer-storage-cloudinary": "^4.0.0",
+    "openai": "^6.10.0",
+    "twilio": "^5.10.7"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
