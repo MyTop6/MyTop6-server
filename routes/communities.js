@@ -125,6 +125,12 @@ router.post("/", async (req, res) => {
       fontUrl,
       backgroundStyle,
       rules = [],
+      detailsHtml = "",
+      category = "",
+      tags = [],
+      adminTags = [],
+      aiTags = [],
+      aiTagConfidence = 0,
     } = req.body;
 
     if (!/^[a-zA-Z0-9]+$/.test(name)) {
@@ -151,6 +157,12 @@ router.post("/", async (req, res) => {
       fontUrl: fontUrl || "",
       backgroundStyle: backgroundStyle || "stretch",
       rules,
+      detailsHtml,
+      category,
+      tags,
+      adminTags,
+      aiTags,
+      aiTagConfidence,
     });
 
     await newCommunity.save();

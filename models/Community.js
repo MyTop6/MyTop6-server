@@ -13,6 +13,42 @@ const CommunitySchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    // ⭐ Rich details & tagging
+    detailsHtml: {
+      type: String,
+      default: "",
+    },
+    category: {
+      type: String,
+      default: "",
+      index: true,
+    },
+    // Final merged tags used for search / recommendations
+    tags: [
+      {
+        type: String,
+        index: true,
+      },
+    ],
+    // Tags chosen by the community founder / admins
+    adminTags: [
+      {
+        type: String,
+      },
+    ],
+    // Tags suggested by AI
+    aiTags: [
+      {
+        type: String,
+      },
+    ],
+    aiTagConfidence: {
+      type: Number,
+      default: 0,
+    },
+
+    // ⬇️ everything you already had
     communityPicture: {
       type: String,
       default: "",
@@ -121,15 +157,16 @@ const CommunitySchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-  },
-  { timestamps: true }
-);
-    //Reports
+
+    // ✅ Reports linked to this community
     reports: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Report"
-      }
-    ]
+        ref: "Report",
+      },
+    ],
+  },
+  { timestamps: true }
+);
 
 module.exports = mongoose.model("Community", CommunitySchema);

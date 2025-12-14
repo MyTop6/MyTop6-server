@@ -1,11 +1,11 @@
 // routes/messages.js
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const Message = require('../models/Message');
-const User = require('../models/User');
+const Message = require("../models/Message");
+const User = require("../models/User");
 
 // ✅ Send a message
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const { sender, recipient, content } = req.body;
 
@@ -14,22 +14,38 @@ router.post('/', async (req, res) => {
     const recipientUser = await User.findById(recipient);
 
     if (!senderUser || !recipientUser) {
-      return res.status(400).json({ error: 'Invalid sender or recipient.' });
+      return res.status(400).json({ error: "Invalid sender or recipient." });
     }
 
-    // Create the message
+    // Create the message (Message schema uses "text")
     const message = new Message({ sender, recipient, text: content });
     await message.save();
 
+    // 🔔 Real-time emit via Socket.IO (if available)
+    const io = req.app.get("io");
+    if (io) {
+      // Notify the recipient in their personal room
+      io.to(`user:${recipient}`).emit("message:new", {
+        message,
+        conversationId: sender, // you can change this to a real convo id later if you add one
+      });
+
+      // (Optional) If you ever want to notify the sender too (e.g., for "delivered"):
+      // io.to(`user:${sender}`).emit("message:sent", {
+      //   message,
+      //   conversationId: recipient,
+      // });
+    }
+
     res.status(201).json(message);
   } catch (err) {
-    console.error('Failed to send message:', err); // Log the error for debugging
-    res.status(500).json({ error: 'Failed to send message.' });
+    console.error("Failed to send message:", err);
+    res.status(500).json({ error: "Failed to send message." });
   }
 });
 
 // ✅ Get conversation between two users
-router.get('/conversation/:user1/:user2', async (req, res) => {
+router.get("/conversation/:user1/:user2", async (req, res) => {
   try {
     const { user1, user2 } = req.params;
 
@@ -39,68 +55,98 @@ router.get('/conversation/:user1/:user2', async (req, res) => {
         { sender: user2, recipient: user1 },
       ],
     })
-      .sort({ timestamp: 1 }) // Oldest to newest
-      .populate('sender', 'username profilePicture')
-      .populate('recipient', 'username profilePicture');
+      .sort({ createdAt: 1 }) // Oldest → newest
+      .populate("sender", "username profilePicture")
+      .populate("recipient", "username profilePicture");
 
     res.json(messages);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch conversation.' });
+    console.error("Failed to fetch conversation:", err);
+    res.status(500).json({ error: "Failed to fetch conversation." });
   }
 });
 
-// ✅ Get recent messages received by a user
-router.get('/inbox/:userId', async (req, res) => {
+// ✅ Get recent messages *received* by a user (raw inbox messages)
+router.get("/inbox/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
 
     const messages = await Message.find({ recipient: userId })
-      .sort({ timestamp: -1 })
-      .populate('sender', 'username profilePicture');
+      .sort({ createdAt: -1 }) // Newest first
+      .populate("sender", "username profilePicture");
 
     res.json(messages);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch inbox.' });
+    console.error("Failed to fetch inbox:", err);
+    res.status(500).json({ error: "Failed to fetch inbox." });
   }
 });
 
 // ✅ Get unique conversation users with last message
-router.get('/conversations/:userId', async (req, res) => {
+router.get("/conversations/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const sent = await Message.find({ sender: userId }).distinct('recipient');
-    const received = await Message.find({ recipient: userId }).distinct('sender');
+    // All people this user has ever messaged / been messaged by
+    const sent = await Message.find({ sender: userId }).distinct("recipient");
+    const received = await Message.find({ recipient: userId }).distinct("sender");
 
-    const conversationUserIds = Array.from(new Set([...sent, ...received]));
+    // 💡 Dedupe by string value (NOT by ObjectId reference)
+    const conversationUserIds = [
+      ...new Set([...sent, ...received].map((id) => id.toString())),
+    ];
 
     const conversations = await Promise.all(
       conversationUserIds.map(async (otherUserId) => {
-        const otherUser = await User.findById(otherUserId).select('username profilePicture');
+        const otherUser = await User.findById(otherUserId).select(
+          "username handle profilePicture"
+        );
+        if (!otherUser) return null; // user deleted, etc.
 
-        // Find last message between the logged-in user and this user
+        // Find last message between logged-in user and this user
         const lastMessage = await Message.findOne({
           $or: [
             { sender: userId, recipient: otherUserId },
             { sender: otherUserId, recipient: userId },
           ],
         })
-          .sort({ timestamp: -1 }) // Most recent
-          .select('text timestamp');
+          .sort({ createdAt: -1 }) // newest first
+          .select("text createdAt sender recipient");
 
         return {
           _id: otherUser._id,
           username: otherUser.username,
+          handle: otherUser.handle,
           profilePicture: otherUser.profilePicture,
-          lastMessage: lastMessage ? { content: lastMessage.text, timestamp: lastMessage.timestamp } : null,
+          lastMessage: lastMessage
+            ? {
+                content: lastMessage.text,
+                timestamp: lastMessage.createdAt,
+                sender: lastMessage.sender,
+                recipient: lastMessage.recipient,
+              }
+            : null,
         };
       })
     );
 
-    res.json(conversations);
+    // strip nulls and sort by last message time
+    const filtered = (conversations || []).filter(Boolean);
+
+    filtered.sort((a, b) => {
+      const tA = a.lastMessage
+        ? new Date(a.lastMessage.timestamp).getTime()
+        : 0;
+      const tB = b.lastMessage
+        ? new Date(b.lastMessage.timestamp).getTime()
+        : 0;
+      return tB - tA;
+    });
+
+    res.json(filtered);
   } catch (err) {
-    console.error('Error fetching conversations:', err);
-    res.status(500).json({ error: 'Failed to fetch conversations.' });
+    console.error("Error fetching conversations:", err);
+    res.status(500).json({ error: "Failed to fetch conversations." });
   }
 });
 

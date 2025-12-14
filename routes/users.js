@@ -21,6 +21,14 @@ function normalizePhone(phone) {
   return String(phone).replace(/\D/g, "").trim();
 }
 
+// ✅ Coerce booleans safely ("false" -> false)
+  const toBool = (v) => {
+    if (typeof v === "boolean") return v;
+    if (typeof v === "string") return v.toLowerCase() === "true";
+    if (typeof v === "number") return v === 1;
+    return false;
+  };
+
 /* ===================================================================== */
 /* 🔹 REGISTER NEW USER – CALLED FROM ExtraDetailsPage                    */
 /* ===================================================================== */
@@ -332,21 +340,14 @@ router.put('/:id', async (req, res) => {
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     // Bio
-    if (req.body.bio !== undefined) {
-      user.bio = req.body.bio;
-    }
+    if (req.body.bio !== undefined) user.bio = req.body.bio;
 
-    // ✅ Profile picture:
-    // Only update if:
-    //  - it's a non-empty string
-    //  - AND it's NOT one of our default "nophoto" placeholders
+    // Profile picture
     if (typeof req.body.profilePicture === "string") {
       const trimmed = req.body.profilePicture.trim();
-
       if (trimmed && !isDefaultProfilePicture(trimmed)) {
         user.profilePicture = trimmed;
       }
-      // If trimmed is empty or default, we LEAVE user.profilePicture as-is.
     }
 
     // Music URL
@@ -364,13 +365,27 @@ router.put('/:id', async (req, res) => {
       user.dob = new Date(req.body.dob);
     }
 
-    // Theme merge
+    // ✅ Ask Me Anything settings (always run)
+    if (req.body.askMeAnythingEnabled !== undefined) {
+      user.askMeAnythingEnabled = toBool(req.body.askMeAnythingEnabled);
+    }
+
+    if (req.body.allowAnonymousQuestions !== undefined) {
+      user.allowAnonymousQuestions = toBool(req.body.allowAnonymousQuestions);
+    }
+
+    // Optional safety: if AMA is off, anonymous must be off too
+    if (!user.askMeAnythingEnabled) {
+      user.allowAnonymousQuestions = false;
+    }
+
+    // ✅ Theme merge (ONLY when theme exists)
     if (req.body.theme) {
       const currentTheme =
         user.theme && typeof user.theme === 'object'
-          ? typeof user.theme.toObject === 'function'
-            ? user.theme.toObject()
-            : user.theme
+          ? (typeof user.theme.toObject === 'function'
+              ? user.theme.toObject()
+              : user.theme)
           : {};
 
       user.theme = {
@@ -380,10 +395,10 @@ router.put('/:id', async (req, res) => {
     }
 
     await user.save();
-    res.json(user);
+    return res.json(user);
   } catch (err) {
     console.error('Update user error:', err);
-    res.status(500).json({ error: 'Server error while updating user' });
+    return res.status(500).json({ error: 'Server error while updating user' });
   }
 });
 
