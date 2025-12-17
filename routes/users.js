@@ -442,27 +442,6 @@ router.put('/:id/top-friends', async (req, res) => {
   }
 });
 
-// Add or update profile music
-router.post('/:id/profile-music', async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-
-    user.profileMusic = {
-      id: req.body.id,
-      title: req.body.title,
-      artist: req.body.artist,
-      image: req.body.image,
-      preview: req.body.preview,
-    };
-
-    await user.save();
-    res.json({ message: 'Profile music updated successfully' });
-  } catch (err) {
-    console.error('Update profile music error:', err);
-    res.status(500).json({ error: 'Failed to update profile music' });
-  }
-});
 
 // Reset new comments count
 router.post('/:id/reset-new-comments', async (req, res) => {

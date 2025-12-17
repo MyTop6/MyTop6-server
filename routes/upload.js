@@ -6,32 +6,39 @@ const cloudinary = require("../config/cloudinary");
 
 const router = express.Router();
 
-// Configure Cloudinary storage for multer
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
+    const isAudio = file.mimetype?.startsWith("audio/");
     return {
-      folder: "mytop6",      // folder name inside your Cloudinary Media Library
-      resource_type: "auto", // images + videos
+      folder: "mytop6",
+      resource_type: isAudio ? "video" : "auto", // ✅ audio goes under "video" on Cloudinary
     };
   },
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: { fileSize: 25 * 1024 * 1024 }, // ✅ 25MB (raise if you want)
+  fileFilter: (req, file, cb) => {
+    const ok =
+      file.mimetype.startsWith("image/") ||
+      file.mimetype.startsWith("video/") ||
+      file.mimetype.startsWith("audio/");
+    cb(ok ? null : new Error("Unsupported file type"), ok);
+  },
+});
 
-// ✅ Upload endpoint – expects field name "file"
 router.post("/", (req, res) => {
   upload.single("file")(req, res, (err) => {
     if (err) {
       console.error("Cloudinary upload error:", err);
-      return res.status(500).json({ error: "Upload failed" });
+      return res.status(500).json({ error: err.message || "Upload failed" });
     }
 
-    if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-    const url = req.file.path; // secure Cloudinary URL
+    const url = req.file.path; // secure URL
     const publicId = req.file.filename || req.file.public_id;
 
     return res.json({ url, publicId });

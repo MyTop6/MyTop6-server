@@ -48,6 +48,13 @@ app.use(cookieParser());
 const allowedOrigins = [
   "null",
 
+  // Android emulator live-reload origin
+  "http://10.0.2.2:3000",
+
+  // Capacitor / Ionic schemes (some WebView setups report these)
+  "capacitor://localhost",
+  "ionic://localhost",
+
   // MyTop6 React dev
   "http://localhost:3000",
   "http://127.0.0.1:3000",

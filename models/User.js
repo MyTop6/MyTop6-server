@@ -161,8 +161,13 @@ const userSchema = new mongoose.Schema(
     // 👥 Friend system
     topFriends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 
-    // 🎵 YouTube Music URL
-    profileMusicUrl: { type: String, default: '' },
+    // 🎵 Music
+    profileMusicUrl: { type: String, default: "" },
+    profileMusicPublicId: { type: String, default: "" },
+
+    // Optional display metadata for the profile player UI
+    profileMusicTitle: { type: String, default: "" },
+    profileMusicArtist: { type: String, default: "" },
 
     // 🎨 Profile customization theme
     theme: {
