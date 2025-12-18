@@ -342,6 +342,9 @@ router.put('/:id', async (req, res) => {
     // Bio
     if (req.body.bio !== undefined) user.bio = req.body.bio;
 
+    // Bio CSS (custom profile CSS)
+    if (req.body.bioCss !== undefined) user.bioCss = String(req.body.bioCss || "");
+
     // Profile picture
     if (typeof req.body.profilePicture === "string") {
       const trimmed = req.body.profilePicture.trim();
@@ -350,9 +353,33 @@ router.put('/:id', async (req, res) => {
       }
     }
 
-    // Music URL
+    // 🎵 Profile music (Cloudinary upload URL)
     if (req.body.profileMusicUrl !== undefined) {
-      user.profileMusicUrl = req.body.profileMusicUrl;
+      const v = typeof req.body.profileMusicUrl === "string" ? req.body.profileMusicUrl.trim() : "";
+      user.profileMusicUrl = v; // allow "" to clear
+    }
+
+    // 🎵 Profile music publicId (so you can delete/replace later)
+    if (req.body.profileMusicPublicId !== undefined) {
+      const v = typeof req.body.profileMusicPublicId === "string" ? req.body.profileMusicPublicId.trim() : "";
+      user.profileMusicPublicId = v; // allow "" to clear
+    }
+
+    // 🎵 Optional profile music metadata (display in player UI)
+    if (req.body.profileMusicTitle !== undefined) {
+      const v =
+        typeof req.body.profileMusicTitle === "string"
+          ? req.body.profileMusicTitle.trim()
+          : "";
+      user.profileMusicTitle = v; // allow "" to clear
+    }
+
+    if (req.body.profileMusicArtist !== undefined) {
+      const v =
+        typeof req.body.profileMusicArtist === "string"
+          ? req.body.profileMusicArtist.trim()
+          : "";
+      user.profileMusicArtist = v; // allow "" to clear
     }
 
     // Location
@@ -365,7 +392,7 @@ router.put('/:id', async (req, res) => {
       user.dob = new Date(req.body.dob);
     }
 
-    // ✅ Ask Me Anything settings (always run)
+    // ✅ Ask Me Anything settings
     if (req.body.askMeAnythingEnabled !== undefined) {
       user.askMeAnythingEnabled = toBool(req.body.askMeAnythingEnabled);
     }
@@ -374,12 +401,11 @@ router.put('/:id', async (req, res) => {
       user.allowAnonymousQuestions = toBool(req.body.allowAnonymousQuestions);
     }
 
-    // Optional safety: if AMA is off, anonymous must be off too
     if (!user.askMeAnythingEnabled) {
       user.allowAnonymousQuestions = false;
     }
 
-    // ✅ Theme merge (ONLY when theme exists)
+    // ✅ Theme merge
     if (req.body.theme) {
       const currentTheme =
         user.theme && typeof user.theme === 'object'

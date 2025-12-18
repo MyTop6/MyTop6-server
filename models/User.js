@@ -188,6 +188,8 @@ const userSchema = new mongoose.Schema(
       boxBorderColor: { type: String, default: '#FFFFFF' },
     },
 
+    bioCss: { type: String, default: "" },
+
     // ✅ Dashboard data (new comments count, etc.)
     dashboardData: {
       newComments: { type: Number, default: 0 },
